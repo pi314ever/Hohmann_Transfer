@@ -45,9 +45,9 @@ soltrABM = ABM4(eqn,tspantr,x0trABM,h);
 x02RK = soltrRK.y(:,end);
 x02RK(4) = x02RK(4)+dV2/R2;
 x02ABM = soltrABM.y(:,end);
-x02ABM(4) = x02RK(4)+dV2/R2;
+x02ABM(4) = x02ABM(4)+dV2/R2;
 
-tspan2 = [0 pi*R2/sqrt(G*Mm/R2)]+tspantr(2);
+tspan2 = [0 2*pi*R2/sqrt(G*Mm/R2)]+tspantr(2);
 
 sol2RK = RK4(eqn,tspan2,x02RK,h);
 sol2ABM = ABM4(eqn,tspan2,x02ABM,h);
@@ -55,7 +55,7 @@ sol2ABM = ABM4(eqn,tspan2,x02ABM,h);
 %% Plotting
 % Combining 
 t_RK = [sol1RK.x soltrRK.x sol2RK.x];
-t_ABM = [sol1ABM.x soltrABM.x sol2RK.x];
+t_ABM = [sol1ABM.x soltrABM.x sol2ABM.x];
 R_RK = [sol1RK.y(1,:) soltrRK.y(1,:) sol2RK.y(1,:)];
 Th_RK = [sol1RK.y(2,:) soltrRK.y(2,:) sol2RK.y(2,:)];
 R_ABM = [sol1ABM.y(1,:) soltrABM.y(1,:) sol2ABM.y(1,:)];
@@ -73,6 +73,9 @@ ym = Rm*sin(th);
 
 % Trajectory plot
 figure
-plot(x_RK,y_RK,x_ABM,y_ABM,'--',xm,ym,'k--')
-legend('RK','ABM','Mars')
+plot(x_RK,y_RK,x_ABM,y_ABM,'g--','Linewidth',2)
+hold on
+plot(xm,ym,'k--')
+legend('RK4','ABM4','Mars')
+axis equal
 
