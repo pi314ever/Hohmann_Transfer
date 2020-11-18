@@ -3,7 +3,7 @@
 %% Setup
 clc;close all;clear
 % Radius of orbits
-R1 = 5E6; % Altitude 1 [m]
+R1 = 9E6; % Altitude 1 [m]
 R2 = 7E6; % Altitude 2 [m]
 h = 10; % Time step [s]
 
@@ -73,9 +73,22 @@ ym = Rm*sin(th);
 
 % Trajectory plot
 figure
-plot(x_RK,y_RK,x_ABM,y_ABM,'g--','Linewidth',2)
+plot(x_RK,y_RK,x_ABM,y_ABM,'g--')
 hold on
 plot(xm,ym,'k--')
-legend('RK4','ABM4','Mars')
+satRK = plot(x_RK(1),y_RK(1),'rx','markersize',10);
+satABM = plot(x_ABM(1),y_ABM(1),'bo','markersize',10);
 axis equal
+title('Animated Trajectory Plot of Mars Hohmann Transfer')
+legend('RK4','ABM4','Mars','RKsat','ABMsat','Location','Bestoutside')
+timelabel = sprintf('Time = %.1f min',t_RK(1)/60);
+ann = annotation('textbox',[0.2 0.3 0 0],'String',timelabel,'FitBoxToText','on');
 
+for ii = 2:min(length(t_RK),length(t_ABM))
+    satRK.XData = x_RK(ii);
+    satRK.YData = y_RK(ii);
+    satABM.XData = x_ABM(ii);
+    satABM.YData = y_ABM(ii);
+    ann.String = sprintf('Time = %.1f min',t_RK(ii)/60);
+    drawnow
+end
