@@ -3,9 +3,9 @@
 %% Setup
 clc;close all;clear
 % Radius of orbits
-R1 = 9E6; % Altitude 1 [m]
-R2 = 7E6; % Altitude 2 [m]
-h = 10; % Time step [s]
+R1 = 5E7; % Altitude 1 [m]
+R2 = 7E7; % Altitude 2 [m]
+h = 500; % Time step [s]
 
 % Constants
 Mm = 6.39E23; % Mass of Mars [kg]
@@ -84,7 +84,7 @@ legend('RK4','ABM4','Mars','RKsat','ABMsat','Location','Bestoutside')
 timelabel = sprintf('Time = %.1f min',t_RK(1)/60);
 ann = annotation('textbox',[0.2 0.3 0 0],'String',timelabel,'FitBoxToText','on');
 
-for ii = 2:min(length(t_RK),length(t_ABM))
+for ii = 2:1:min(length(t_RK),length(t_ABM))
     satRK.XData = x_RK(ii);
     satRK.YData = y_RK(ii);
     satABM.XData = x_ABM(ii);

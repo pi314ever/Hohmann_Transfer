@@ -5,6 +5,7 @@ clc;close all;clear
 % Radius of target orbits (WRT Earth)
 ro = 1E7; % Radius of initial orbit [m]
 rf = 3.5E8; % Radius of target orbit [m]
+h = 10; % Time step [s]
 
 % Constants
 G = 6.6743E-11; % Gravitational constant [N*m^2/kg^2]
@@ -57,7 +58,8 @@ soltr = ode45(eqn,tspantr,x0tr,opttr);
 % Circularization burn
 x02 = soltr.y(:,end);
 uv2 = x02(4:6)/norm(x02(4:6));
-x02(4:6) = sqrt(G*Mm/R2mag(x02))*uv2;
+dV2 = sqrt(G*Mm/R2mag(x02))*uv2-x02(4:6);
+x02(4:6) = x02(4:6)+dV2;
 tspan2 = [0 pi/6*rf/sqrt(G*Me/rf)/100]*100+soltr.x(end);
 opt2 = odeset('Events',@(t,x)eventhit(t,x,xe,xm,Re,Rm,Rem)); % Stop if hit Moon or Earth
 
@@ -65,13 +67,12 @@ sol2 = ode45(eqn,tspan2,x02,opt2);
 
 %% What if no dV2
 x02_nodV = soltr.y(:,end);
-tspan2_nodV = tspan2;
+tspan2_nodV = [0 2E6]+soltr.x(end);
 opt2_nodV = opt2;
 
-sol2_nodV = ode45(eqn,tspan2,x02,opt2);
+sol2_nodV = ode45(eqn,tspan2_nodV,x02_nodV,opt2_nodV);
 
 %% Deval for constant time step
-h = 10; % Time step [s]
 t1 = sol1.x(1):h:sol1.x(end-1);
 ttr = soltr.x(1):h:soltr.x(end-1);
 t2 = sol2.x(1):h:sol2.x(end);
@@ -79,18 +80,21 @@ t2_nodV = sol2_nodV.x(1):h:sol2_nodV.x(end);
 dsol1 = deval(sol1,t1);
 dsoltr = deval(soltr,ttr);
 dsol2 = deval(sol2,t2);
-dsol2_nodV = deval(sol2_nodV.t2_nodV);
+dsol2_nodV = deval(sol2_nodV,t2_nodV);
 
 %% Extract coordinates
 x1 = dsol1(1,:);
 xtr = dsoltr(1,:);
 x2 = dsol2(1,:);
+x2_nodV = dsol2_nodV(1,:);
 y1 = dsol1(2,:);
 ytr = dsoltr(2,:);
 y2 = dsol2(2,:);
+y2_nodV = dsol2_nodV(2,:);
 z1 = dsol1(3,:);
 ztr = dsoltr(3,:);
 z2 = dsol2(3,:);
+z2_nodV = dsol2_nodV(3,:);
 
 x = [x1 xtr x2];
 y = [y1 ytr y2];
@@ -110,13 +114,12 @@ Zm = zs*Rm;
 figure
 plot3(x,y,z,'linewidth',2)
 hold on
-plot3(-xe,0,0,'kx','markersize',5)
-plot3(xm,0,0,'kx','markersize',5)
+plot3(x2_nodV,y2_nodV,z2_nodV,'r--','linewidth',1.5)
 plot3(x(1),y(1),z(1),'x','markersize',5)
 plot3(xtr(1),ytr(1),ztr(1),'x','markersize',5)
 plot3(x2(1),y2(1),z2(1),'x','markersize',5)
 surf(Xe,Ye,Ze);surf(Xm,Ym,Zm)
-legend('Trajectory','Earth','Start','dV1','dV2')
+legend('Trajectory','No dV2','Start','dV1','dV2')
 xlabel('x')
 ylabel('y')
 zlabel('z')
@@ -134,15 +137,16 @@ hold on
 plot(x(1),y(1),'x')
 plot(xtr(1),ytr(1),'x')
 plot(x2(1),y2(1),'x')
-legend('E','M','Start','dV1','dV2')
+%legend('E','M','Start','dV1','dV2')
 axis equal
+xlabel('bx [m]');ylabel('by [m]');title('Barycenter Comet Plot')
 comet(x,y)
 
 %% Newtonian plot
-ang = t*omega;
-figure
-plot(x.*cos(ang)-y.*sin(ang),x.*sin(ang)+y.*cos(ang))
-axis equal
+% ang = t*omega;
+% figure
+% plot(x.*cos(ang)-y.*sin(ang),x.*sin(ang)+y.*cos(ang))
+% axis equal
 
 
 %% Animation
