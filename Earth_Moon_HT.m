@@ -4,7 +4,7 @@
 clc;close all;clear
 % Radius of target orbits (WRT Earth)
 ro = 1E7; % Radius of initial orbit [m]
-rf = 3.5E8; % Radius of target orbit [m]
+rf = 3.3E8; % Radius of target orbit [m]
 h = 10; % Time step [s]
 
 % Constants
@@ -60,21 +60,21 @@ x02 = soltr.y(:,end);
 uv2 = x02(4:6)/norm(x02(4:6));
 dV2 = sqrt(G*Mm/R2mag(x02))*uv2-x02(4:6);
 x02(4:6) = x02(4:6)+dV2;
-tspan2 = [0 pi/6*rf/sqrt(G*Me/rf)/100]*100+soltr.x(end);
+tspan2 = [0 pi/6*rf/sqrt(G*Me/rf)/100]*600+soltr.x(end);
 opt2 = odeset('Events',@(t,x)eventhit(t,x,xe,xm,Re,Rm,Rem)); % Stop if hit Moon or Earth
 
 sol2 = ode45(eqn,tspan2,x02,opt2);
 
 %% What if no dV2
 x02_nodV = soltr.y(:,end);
-tspan2_nodV = [0 2E6]+soltr.x(end);
+tspan2_nodV = [0 1.5E6]+soltr.x(end);
 opt2_nodV = opt2;
 
 sol2_nodV = ode45(eqn,tspan2_nodV,x02_nodV,opt2_nodV);
 
 %% Deval for constant time step
-t1 = sol1.x(1):h:sol1.x(end-1);
-ttr = soltr.x(1):h:soltr.x(end-1);
+t1 = sol1.x(1):h:sol1.x(end);
+ttr = soltr.x(1):h:soltr.x(end);
 t2 = sol2.x(1):h:sol2.x(end);
 t2_nodV = sol2_nodV.x(1):h:sol2_nodV.x(end);
 dsol1 = deval(sol1,t1);
@@ -100,6 +100,10 @@ x = [x1 xtr x2];
 y = [y1 ytr y2];
 z = [z1 ztr z2];
 t = [t1 ttr t2];
+x_nodV = [x1 xtr x2_nodV];
+y_nodV = [y1 ytr y2_nodV];
+z_nodV = [z1 ztr z2_nodV];
+t_nodV = [t1 ttr t2_nodV];
 
 %% Barycenter Trajectory plot
 [xs,ys,zs] = sphere;
@@ -125,7 +129,7 @@ ylabel('y')
 zlabel('z')
 axis equal
 
-%% 2D Plot
+%% Comet Plot
 th = 0:0.01:2*pi;
 xet = Re*cos(th)-xe;
 yet = Re*sin(th);
@@ -142,13 +146,43 @@ axis equal
 xlabel('bx [m]');ylabel('by [m]');title('Barycenter Comet Plot')
 comet(x,y)
 
-%% Newtonian plot
-% ang = t*omega;
-% figure
-% plot(x.*cos(ang)-y.*sin(ang),x.*sin(ang)+y.*cos(ang))
-% axis equal
+%% Comet Plot nodV
+figure
+plot(xet,yet,'k--',xmt,ymt,'k--')
+hold on
+plot(x(1),y(1),'x')
+plot(xtr(1),ytr(1),'x')
+plot(x2(1),y2(1),'x')
+%legend('E','M','Start','dV1','dV2')
+axis equal
+xlabel('bx [m]');ylabel('by [m]');title('Barycenter Comet Plot')
+comet(x_nodV,y_nodV)
 
+%% Newtonian Animation 
+ang = t_nodV*omega;
+figure
+Earth = plot(-xe*cos(ang(1)),-xe*sin(ang(1)),'Ob','Markersize',4);
+hold on
+Moon = plot(xm*cos(ang(1)),xm*sin(ang(1)),'Or','Markersize',1);
+plot(x_nodV.*cos(ang)-y_nodV.*sin(ang),x_nodV.*sin(ang)+y_nodV.*cos(ang),'k--')
+Sat_nodV = plot(x_nodV(1).*cos(ang(1))-y_nodV(1).*sin(ang(1)),x_nodV(1).*sin(ang(1))+y_nodV(1).*cos(ang(1)),'mx');
+legend('Earth','Moon','Trajectory','Satellite')
+title('Newtonian Animation')
+xlabel('nx [m]');ylabel('ny [m]')
+timelabel = sprintf('Time = %.3f Days',t_nodV(1)/3600/24);
+ann = annotation('textbox',[0.2 0.3 0 0],'String',timelabel,'FitBoxToText','on');
 
-%% Animation
+for ii = 2:70:length(t_nodV)
+    Earth.XData = -xe*cos(ang(ii));
+    Earth.YData = -xe*sin(ang(ii));
+    Moon.XData = xm*cos(ang(ii));
+    Moon.YData = xm*sin(ang(ii));
+    Sat_nodV.XData = x_nodV(ii).*cos(ang(ii))-y_nodV(ii).*sin(ang(ii));
+    Sat_nodV.YData = x_nodV(ii).*sin(ang(ii))+y_nodV(ii).*cos(ang(ii));
+    ann.String = sprintf('Time = %.3f Days',t_nodV(ii)/3600/24);
+    axis equal
+    drawnow
+end
+
 
 
